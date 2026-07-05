@@ -1,0 +1,19 @@
+---
+title: "Research Like a Software Engineer"
+author: "Travis Hathaway"
+format: revealjs
+---
+
+## Tutorial
+
+Here's what we'll cover in today's tutorial...
+
+::: {.incremental}
+- Setting up our development environment
+- An overview of the tools we'll be using
+- Discovering the problem we're trying to solve
+- Creating the project structure
+- Running the tools we've created
+- Final analysis
+:::
+

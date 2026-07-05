@@ -1,0 +1,14 @@
+color:
+  palette:
+    dark-grey: "#222222"
+    mintgreen: "#f3fff2"
+  background: mintgreen
+  foreground: dark-grey
+  primary: black
+
+typography:
+  fonts:
+    - family: "Source Serif 4"
+      source: google
+  base: "Source Serif 4"
+  headings: "Source Serif 4"
