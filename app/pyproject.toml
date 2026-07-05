@@ -1,22 +1,30 @@
 [project]
 authors = [{name = "Travis Hathaway", email = "travis.j.hathaway@gmail.com"}]
 dependencies = []
-name = "app"
+name = "parkalyzer"
 requires-python = ">= 3.11"
 version = "0.1.0"
+
+[project.scripts]
+parkalyzer = "parkalyzer.main:cli"
 
 [build-system]
 build-backend = "hatchling.build"
 requires = ["hatchling"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/parkalyzer"]
 
 [tool.pixi.workspace]
 channels = ["conda-forge", "gis-forge"]
 platforms = ["osx-arm64", "linux-64", "linux-aarch64"]
 
 [tool.pixi.pypi-dependencies]
-app = { path = ".", editable = true }
+parkalyzer = { path = ".", editable = true }
 
-[tool.pixi.tasks]
+[tool.pixi.environments]
+default = { solve-group = "default" }
+dev = { features = ["dev"], solve-group = "default" }
 
 [tool.pixi.dependencies]
 ors-launcher = ">=0.1.0,<0.2"
@@ -31,3 +39,39 @@ sqlalchemy = ">=2.0.51,<3"
 sqlalchemy-with-postgresql-psycopg = ">=2.0.51,<3"
 rich = ">=15.0.0,<16"
 zensus2pgsql = ">=0.2.1,<0.3"
+
+[tool.pixi.feature.dev.dependencies]
+pytest = "*"
+pytest-cov = "*"
+ruff = "*"
+mypy = "*"
+types-pyyaml = "*"
+prek = "*"
+
+[tool.pixi.tasks]
+parkalyzer  = "parkalyzer"
+migrate     = "parkalyzer db migrate"
+db-revision = "parkalyzer db revision"
+pg-start    = "pg-helper start"
+pg-stop     = "pg-helper stop"
+
+[tool.pixi.feature.dev.tasks]
+test = "pytest tests/unit"
+test-integration = "pytest tests/integration -v"
+coverage = "pytest --cov=ors_launcher --cov-report=html tests/"
+lint = "ruff check ors_launcher tests && mypy ors_launcher"
+hooks-install = "prek install"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests that require live services (deselect with -m 'not integration')",
+]
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+plugins = ["pydantic.mypy"]
