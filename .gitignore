@@ -226,3 +226,9 @@ __marimo__/
 # Vim
 *.swo
 *.swp
+
+# Application data/config folders
+app/.ors/
+app/.osmprj/
+app/.pgdata/
+app/env.sh

@@ -1,8 +1,22 @@
 version: 7
 platforms:
 - name: linux-64
+  virtual-packages:
+  - __unix=0=0
+  - __linux=4.18
+  - __glibc=2.28
+  - __archspec=0=x86_64
 - name: linux-aarch64
+  virtual-packages:
+  - __unix=0=0
+  - __linux=4.18
+  - __glibc=2.28
+  - __archspec=0=aarch64
 - name: osx-arm64
+  virtual-packages:
+  - __unix=0=0
+  - __osx=13.0
+  - __archspec=0=m1
 environments:
   default:
     channels:
@@ -170,6 +184,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/osm2pgsql-replication-2.3.0-pyhd7f29a5_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.10.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-3.3.4-pyh848bd53_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-pool-3.3.1-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pydantic-2.13.4-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pysocks-1.7.1-pyha55dd90_7.conda
@@ -195,7 +210,7 @@ environments:
       - conda: https://conda.anaconda.org/gis-forge/noarch/osm2pgsql-themepark-0.1.0-h4616a5c_1.conda
       - conda: https://conda.anaconda.org/gis-forge/noarch/pg-helper-0.2.0-pyh4616a5c_0.conda
       - conda: https://conda.anaconda.org/gis-forge/noarch/pgosm-themepark-0.1.0-h4616a5c_0.conda
-      - pypi: .
+      - pypi: ./
       linux-aarch64:
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/aiocsv-1.4.0-py314h51f160d_1.conda
@@ -355,6 +370,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/osm2pgsql-replication-2.3.0-pyhd7f29a5_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.10.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-3.3.4-pyh848bd53_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-pool-3.3.1-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pydantic-2.13.4-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pysocks-1.7.1-pyha55dd90_7.conda
@@ -380,7 +396,7 @@ environments:
       - conda: https://conda.anaconda.org/gis-forge/noarch/osm2pgsql-themepark-0.1.0-h4616a5c_1.conda
       - conda: https://conda.anaconda.org/gis-forge/noarch/pg-helper-0.2.0-pyh4616a5c_0.conda
       - conda: https://conda.anaconda.org/gis-forge/noarch/pgosm-themepark-0.1.0-h4616a5c_0.conda
-      - pypi: .
+      - pypi: ./
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/aiofiles-25.1.0-pyhcf101f3_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/alembic-1.18.5-pyhcf101f3_0.conda
@@ -409,6 +425,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/osm2pgsql-replication-2.3.0-pyhd7f29a5_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.10.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-3.3.4-pyh848bd53_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-pool-3.3.1-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pydantic-2.13.4-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pysocks-1.7.1-pyha55dd90_7.conda
@@ -521,7 +538,7 @@ environments:
       - conda: https://conda.anaconda.org/gis-forge/noarch/pg-helper-0.2.0-pyh4616a5c_0.conda
       - conda: https://conda.anaconda.org/gis-forge/noarch/pgosm-themepark-0.1.0-h4616a5c_0.conda
       - conda: https://conda.anaconda.org/gis-forge/osx-arm64/osmprj-0.3.0-hb6a1248_0.conda
-      - pypi: .
+      - pypi: ./
   dev:
     channels:
     - url: https://conda.anaconda.org/conda-forge/
@@ -702,6 +719,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.10.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pluggy-1.6.0-pyhf9edf01_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-3.3.4-pyh848bd53_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-pool-3.3.1-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pydantic-2.13.4-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pysocks-1.7.1-pyha55dd90_7.conda
@@ -731,7 +749,7 @@ environments:
       - conda: https://conda.anaconda.org/gis-forge/noarch/osm2pgsql-themepark-0.1.0-h4616a5c_1.conda
       - conda: https://conda.anaconda.org/gis-forge/noarch/pg-helper-0.2.0-pyh4616a5c_0.conda
       - conda: https://conda.anaconda.org/gis-forge/noarch/pgosm-themepark-0.1.0-h4616a5c_0.conda
-      - pypi: .
+      - pypi: ./
       linux-aarch64:
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/_openmp_mutex-4.5-20_gnu.conda
       - conda: https://conda.anaconda.org/conda-forge/linux-aarch64/aiocsv-1.4.0-py314h51f160d_1.conda
@@ -905,6 +923,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.10.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pluggy-1.6.0-pyhf9edf01_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-3.3.4-pyh848bd53_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-pool-3.3.1-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pydantic-2.13.4-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pysocks-1.7.1-pyha55dd90_7.conda
@@ -934,7 +953,7 @@ environments:
       - conda: https://conda.anaconda.org/gis-forge/noarch/osm2pgsql-themepark-0.1.0-h4616a5c_1.conda
       - conda: https://conda.anaconda.org/gis-forge/noarch/pg-helper-0.2.0-pyh4616a5c_0.conda
       - conda: https://conda.anaconda.org/gis-forge/noarch/pgosm-themepark-0.1.0-h4616a5c_0.conda
-      - pypi: .
+      - pypi: ./
       osx-arm64:
       - conda: https://conda.anaconda.org/conda-forge/noarch/_python_abi3_support-1.0-hd8ed1ab_2.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/aiofiles-25.1.0-pyhcf101f3_1.conda
@@ -970,6 +989,7 @@ environments:
       - conda: https://conda.anaconda.org/conda-forge/noarch/platformdirs-4.10.0-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pluggy-1.6.0-pyhf9edf01_1.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-3.3.4-pyh848bd53_0.conda
+      - conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-pool-3.3.1-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pydantic-2.13.4-pyhcf101f3_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pygments-2.20.0-pyhd8ed1ab_0.conda
       - conda: https://conda.anaconda.org/conda-forge/noarch/pysocks-1.7.1-pyha55dd90_7.conda
@@ -1093,7 +1113,7 @@ environments:
       - conda: https://conda.anaconda.org/gis-forge/noarch/pg-helper-0.2.0-pyh4616a5c_0.conda
       - conda: https://conda.anaconda.org/gis-forge/noarch/pgosm-themepark-0.1.0-h4616a5c_0.conda
       - conda: https://conda.anaconda.org/gis-forge/osx-arm64/osmprj-0.3.0-hb6a1248_0.conda
-      - pypi: .
+      - pypi: ./
 packages:
 - conda: https://conda.anaconda.org/conda-forge/linux-64/_openmp_mutex-4.5-20_gnu.conda
   build_number: 20
@@ -5943,6 +5963,20 @@ packages:
   run_exports: {}
   size: 146679
   timestamp: 1777719871089
+- conda: https://conda.anaconda.org/conda-forge/noarch/psycopg-pool-3.3.1-pyhcf101f3_0.conda
+  sha256: c2c8ef6b8a2a1b89a0d49746372ef54b841d15101c04db85430cd2fdff52b729
+  md5: f5c389ba11d477d529e880e82442d370
+  depends:
+  - python >=3.10
+  - typing_extensions >=4.6
+  - python
+  license: LGPL-3.0-or-later
+  license_family: LGPL
+  purls:
+  - pkg:pypi/psycopg-pool?source=hash-mapping
+  run_exports: {}
+  size: 33069
+  timestamp: 1777821962862
 - conda: https://conda.anaconda.org/conda-forge/noarch/pydantic-2.13.4-pyhcf101f3_0.conda
   sha256: 69700e31165df070e9716315e042196aa92525dae5deb5107785847ab9f4189f
   md5: 729843edafc0899b3348bd3f19525b9d
@@ -7879,6 +7913,6 @@ packages:
   license: GPL-3.0-only
   size: 2757260
   timestamp: 1779001796811
-- pypi: .
+- pypi: ./
   name: parkalyzer
   requires_python: '>=3.11'

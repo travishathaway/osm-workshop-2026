@@ -10,12 +10,15 @@ from pathlib import Path
 
 import httpx
 import pytest
+import platformdirs
+
+from parkalyzer.constants import APP_NAME
 
 BREMEN_PBF_URL = "https://download.geofabrik.de/europe/germany/bremen-latest.osm.pbf"
 ZENSUS_DATASET = "alter_in_5_altersklassen"
 # Bremen bounding box (WGS84): minlon, minlat, maxlon, maxlat
 BREMEN_BBOX = "8.48,53.01,8.99,53.23"
-
+SRID = "3857"
 
 def _find_free_port() -> int:
     """Find a free TCP port on localhost."""
@@ -51,15 +54,18 @@ def postgresql(tmp_path_factory):
 
     cluster.teardown(remove_data=True)
 
+@pytest.fixture(scope="session")
+def cache_dir():
+    """Ensure cache directory exists."""
+    location = Path(platformdirs.user_cache_dir(f"{APP_NAME}-tests"))
+    location.mkdir(parents=True, exists_ok=True)
+
+    return location
 
 @pytest.fixture(scope="session")
-def bremen_osm_pbf():
+def bremen_osm_pbf(cache_dir):
     """Provide the Bremen OSM PBF file path, downloading it if not cached.
-
-    Cached at ~/.cache/parkalyzer-tests/ to avoid re-downloading across test runs.
     """
-    cache_dir = Path.home() / ".cache" / "parkalyzer-tests"
-    cache_dir.mkdir(parents=True, exist_ok=True)
     pbf = cache_dir / "bremen-latest.osm.pbf"
     if not pbf.exists():
         urllib.request.urlretrieve(BREMEN_PBF_URL, pbf)
@@ -67,25 +73,43 @@ def bremen_osm_pbf():
 
 
 @pytest.fixture(scope="session")
-def osmprj_data(postgresql, bremen_osm_pbf):
+def osmprj_data(postgresql, bremen_osm_pbf, tmp_path):
     """Load Bremen OSM data into the test PostgreSQL database via osmprj.
 
     Uses the 'pgosm' theme to populate planet_osm_polygon and related tables
     in the public schema (SRID 3857), which is what the parks find command reads.
-
-    NOTE: The osmprj CLI flags below are best-effort. Verify with `osmprj --help`
-    in the pixi env and adjust the subcommand name / flag names if needed.
     """
+    workdir = Path(tmp_path).mkdir()
+
     subprocess.run(
         [
-            "osmprj", "import",
-            str(bremen_osm_pbf),
-            "--dsn", postgresql["native_dsn"],
+            "osmprj", "init",
+            "--db", postgresql["native_dsn"],
             "--theme", "pgosm",
         ],
         check=True,
+        cwd=workdir,
     )
-    yield postgresql
+
+    subprocess.run(
+        [
+            "osmprj", "add",
+            "--srid", SRID,
+            "--path", str(bremen_osm_pbf),
+            "--name", "bremen"
+        ],
+        check=True,
+        cwd=workdir,
+    )
+
+    subprocess.run(
+        [
+            "osmprj", "sync",
+        ],
+        check=True,
+        cwd=workdir,
+    )
+    yield workdir
 
 
 @pytest.fixture(scope="session")
@@ -113,6 +137,7 @@ def zensus_data(postgresql):
             "--database", postgresql["database"],
             "--user", postgresql["user"],
             "--schema", "zensus",
+            "--srid", SRID,
             "--password", "",  # trust auth — any value avoids the interactive password prompt
         ],
         check=True,
@@ -126,7 +151,7 @@ def openrouteservice(tmp_path_factory, bremen_osm_pbf):
 
     Uses the Bremen OSM PBF for routing graphs. First run builds the graph,
     which can take several minutes. Subsequent runs reuse cached graphs in the
-    install directory (inside tmp_path_factory, so NOT cached across test runs).
+    installation directory (inside tmp_path_factory, so NOT cached across test runs).
 
     Yields a dict with:
         port: int — the port ORS is listening on

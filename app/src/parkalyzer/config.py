@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass
 
-from parkalyzer.constants import DEFAULT_ORS_BASE_URL, OSM_SCHEMA, SCHEMA_NAME, ZENSUS_SCHEMA
+from parkalyzer.constants import DEFAULT_ORS_BASE_URL, GEOMETRY_SRID, OSM_SCHEMA, SCHEMA_NAME, ZENSUS_SCHEMA
 from parkalyzer.errors import ConfigurationError
 
 
@@ -16,6 +16,7 @@ class Config:
     schema_name: str = SCHEMA_NAME
     osm_schema: str = OSM_SCHEMA
     zensus_schema: str = ZENSUS_SCHEMA
+    srid: int = GEOMETRY_SRID
 
     @classmethod
     def from_env(
@@ -31,6 +32,7 @@ class Config:
             PARKALYZER_SCHEMA        — optional
             PARKALYZER_OSM_SCHEMA    — optional
             PARKALYZER_ZENSUS_SCHEMA — optional
+            PARKALYZER_SRID          — optional
 
         Raises:
             ConfigurationError: If no DSN is available.
@@ -47,4 +49,5 @@ class Config:
             schema_name=os.environ.get("PARKALYZER_SCHEMA", SCHEMA_NAME),
             osm_schema=os.environ.get("PARKALYZER_OSM_SCHEMA", OSM_SCHEMA),
             zensus_schema=os.environ.get("PARKALYZER_ZENSUS_SCHEMA", ZENSUS_SCHEMA),
+            srid=int(os.environ.get("PARKALYZER_SRID", GEOMETRY_SRID)),
         )

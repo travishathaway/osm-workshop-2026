@@ -39,7 +39,7 @@ def test_upgrade_head_creates_all_tables(postgresql):
     engine.dispose()
 
     assert "parks" in tables
-    assert "census_points" in tables
+    assert "census_points" not in tables
     assert "distance_pairs" in tables
 
 

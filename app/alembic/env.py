@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from logging.config import fileConfig
 
-from sqlalchemy import engine_from_config, pool
+from sqlalchemy import engine_from_config, pool, text
 
 from alembic import context
 
@@ -37,6 +37,7 @@ def run_migrations_offline() -> None:
         version_table_schema="parkalyzer",
     )
     with context.begin_transaction():
+        context.execute("CREATE SCHEMA IF NOT EXISTS parkalyzer")
         context.run_migrations()
 
 
@@ -48,6 +49,8 @@ def run_migrations_online() -> None:
         poolclass=pool.NullPool,
     )
     with connectable.connect() as connection:
+        connection.execute(text("CREATE SCHEMA IF NOT EXISTS parkalyzer"))
+        connection.commit()
         context.configure(
             connection=connection,
             target_metadata=target_metadata,

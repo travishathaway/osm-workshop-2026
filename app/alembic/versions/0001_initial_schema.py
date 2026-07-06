@@ -24,7 +24,7 @@ def upgrade() -> None:
             id          SERIAL PRIMARY KEY,
             osm_id      BIGINT NOT NULL UNIQUE,
             name        VARCHAR(500),
-            geometry    GEOMETRY(POLYGON, 4326) NOT NULL,
+            geometry    GEOMETRY(POLYGON, 3857) NOT NULL,
             area        DOUBLE PRECISION,
             created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
         )
@@ -38,7 +38,7 @@ def upgrade() -> None:
         CREATE TABLE IF NOT EXISTS parkalyzer.census_points (
             id          SERIAL PRIMARY KEY,
             external_id VARCHAR(100) NOT NULL UNIQUE,
-            geometry    GEOMETRY(POINT, 4326) NOT NULL,
+            geometry    GEOMETRY(POINT, 3857) NOT NULL,
             population  INTEGER,
             created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
         )

@@ -1,12 +1,11 @@
 ---
 title: "Research Like a Software Engineer"
+subtitle: "Organizing Your Projects Like Applications"
 author: "Travis Hathaway"
 format: revealjs
 ---
 
-## Tutorial
-
-Here's what we'll cover in today's tutorial...
+## Today's agenda
 
 ::: {.incremental}
 - Setting up our development environment
@@ -16,4 +15,21 @@ Here's what we'll cover in today's tutorial...
 - Running the tools we've created
 - Final analysis
 :::
+
+
+## Environment management with `pixi`
+
+:::: {.columns}
+
+::: {.column width="60%" .incremental}
+- Project based dependency management
+- Uses conda packaging
+- Built on top of conda-forge
+:::
+
+::: {.column width="40%"}
+![](img/paxton-as-pixi.svg){fig-align="center"}
+:::
+
+::::
 

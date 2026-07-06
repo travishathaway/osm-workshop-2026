@@ -29,7 +29,7 @@ def test_routes_status_empty_database(migrated_db):
     result = runner.invoke(cli, ["--dsn", migrated_db["dsn"], "routes", "status"])
     assert result.exit_code == 0, result.output
     assert "Parks" in result.output
-    assert "Census points" in result.output
+    assert "Zensus grid cells" in result.output
 
 
 @pytest.mark.integration

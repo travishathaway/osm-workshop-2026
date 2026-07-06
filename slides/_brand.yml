@@ -1,8 +1,8 @@
 color:
   palette:
     dark-grey: "#222222"
-    mintgreen: "#f3fff2"
-  background: mintgreen
+    off-white: "#fffbf2"
+  background: off-white
   foreground: dark-grey
   primary: black
 

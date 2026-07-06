@@ -7,9 +7,6 @@ from click.testing import CliRunner
 
 from parkalyzer.main import cli
 
-# Bremen bounding box (WGS84)
-BREMEN_BBOX = "8.48,53.01,8.99,53.23"
-
 
 def _alembic_cfg(dsn: str) -> AlembicConfig:
     ini_path = Path(__file__).parent.parent.parent / "alembic.ini"
@@ -36,14 +33,13 @@ def test_parks_list_empty(migrated_db):
 
 @pytest.mark.integration
 def test_parks_find_dry_run_reports_count(migrated_db, osmprj_data):
-    """parks find --dry-run should find parks in Bremen and report a count."""
+    """parks find --dry-run should find parks and report a count."""
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["--dsn", migrated_db["dsn"], "parks", "find", "--bbox", BREMEN_BBOX, "--dry-run"],
+        ["--dsn", migrated_db["dsn"], "parks", "find", "--dry-run"],
     )
     assert result.exit_code == 0, result.output
-    # Should report finding at least some parks (Bremen has many green spaces)
     assert "parks" in result.output.lower()
 
 
@@ -55,7 +51,7 @@ def test_parks_find_imports_parks(migrated_db, osmprj_data):
     runner = CliRunner()
     result = runner.invoke(
         cli,
-        ["--dsn", migrated_db["dsn"], "parks", "find", "--bbox", BREMEN_BBOX],
+        ["--dsn", migrated_db["dsn"], "parks", "find"],
     )
     assert result.exit_code == 0, result.output
 
@@ -76,7 +72,7 @@ def test_parks_find_is_idempotent(migrated_db, osmprj_data):
     for _ in range(2):
         result = runner.invoke(
             cli,
-            ["--dsn", migrated_db["dsn"], "parks", "find", "--bbox", BREMEN_BBOX],
+            ["--dsn", migrated_db["dsn"], "parks", "find"],
         )
         assert result.exit_code == 0, result.output
 
