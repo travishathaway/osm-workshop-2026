@@ -56,7 +56,7 @@ def _psycopg_dsn(dsn: str) -> str:
     return dsn.replace("postgresql+psycopg://", "postgresql://")
 
 
-def _build_pairs_sql(limit: int | None) -> str:
+def _build_pairs_sql(limit: int | None, osm_schema: str) -> str:
     limit_clause = f"LIMIT {limit}" if limit else ""
     return f"""
         SELECT
@@ -70,7 +70,7 @@ def _build_pairs_sql(limit: int | None) -> str:
             SELECT z.gitter_id_100m, z.geom
             FROM {ZENSUS_SCHEMA}.{ZENSUS_TABLE} z
             JOIN
-                brandenburg.place_polygon b
+                {osm_schema}.place_polygon b
             ON
                 b.name = %s AND ST_Contains(b.geom, z.geom)
             {limit_clause}
@@ -92,7 +92,7 @@ def _build_pairs_sql(limit: int | None) -> str:
     """
 
 
-def _build_count_sql(limit: int | None) -> str:
+def _build_count_sql(limit: int | None, osm_schema: str) -> str:
     limit_clause = f"LIMIT {limit}" if limit else ""
     return f"""
         SELECT COUNT(*)
@@ -100,7 +100,7 @@ def _build_count_sql(limit: int | None) -> str:
             SELECT z.gitter_id_100m, z.geom
             FROM {ZENSUS_SCHEMA}.{ZENSUS_TABLE} z
             JOIN
-                brandenburg.place_polygon b
+                {osm_schema}.place_polygon b
             ON
                 b.name = %s AND ST_Contains(b.geom, z.geom)
             {limit_clause}
@@ -202,15 +202,20 @@ async def _process_batch(
         logger.error("Batch cancelled — all tasks stopped.")
 
 
-async def _calculate_async(dsn: str, ors_url: str, profile: str, limit: int | None, location: str) -> None:
+async def _calculate_async(
+    profile: str,
+    limit: int | None,
+    location: str,
+    config: Config
+) -> None:
     """Async entry point for the calculate command."""
-    native_dsn = _psycopg_dsn(dsn)
+    native_dsn = _psycopg_dsn(config.dsn)
     pool = psycopg_pool.AsyncConnectionPool(native_dsn, open=False)
     await pool.open()
 
     try:
         async with pool.connection() as conn, conn.cursor() as cur:
-            await cur.execute(_build_count_sql(limit), (location, ))
+            await cur.execute(_build_count_sql(limit, config.osm_schema), (location, ))
             (total,) = await cur.fetchone()
 
         if total == 0:
@@ -232,13 +237,13 @@ async def _calculate_async(dsn: str, ors_url: str, profile: str, limit: int | No
             async with httpx.AsyncClient() as client:
                 async with pool.connection() as conn:
                     async with conn.cursor(name="census_pairs_cursor") as cur:
-                        await cur.execute(_build_pairs_sql(limit), (location, ))
+                        await cur.execute(_build_pairs_sql(limit, config.osm_schema), (location, ))
                         while True:
                             rows = await cur.fetchmany(_PAGE_SIZE)
                             if not rows:
                                 break
                             await _process_batch(
-                                pool, client, rows, semaphore, progress, task_id, ors_url, profile
+                                pool, client, rows, semaphore, progress, task_id, config.ors_url, profile
                             )
 
     finally:
@@ -287,7 +292,7 @@ def calculate(
                 "Start ORS with 'ors-launcher start' or set PARKALYZER_ORS_URL."
             )
 
-    asyncio.run(_calculate_async(config.dsn, config.ors_url, profile, limit, location))
+    asyncio.run(_calculate_async(profile, limit, location, config))
 
 
 @routes_group.command("status")

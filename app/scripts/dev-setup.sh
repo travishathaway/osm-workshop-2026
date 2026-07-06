@@ -25,6 +25,7 @@ PG_PORT="${PARKALYZER_PG_PORT:-65432}"
 ORS_PORT="${PARKALYZER_ORS_PORT:-8080}"
 DB_NAME="parkalyzer"
 PG_USER="postgres"
+REGION="brandenburg"
 NATIVE_DSN="postgresql://${PG_USER}@localhost:${PG_PORT}/${DB_NAME}"
 SQLALCHEMY_DSN="postgresql+psycopg://${PG_USER}@localhost:${PG_PORT}/${DB_NAME}"
 
@@ -37,8 +38,8 @@ esac
 OSMPRJ_WORKDIR="$PROJECT_ROOT/.osmprj"
 ORS_INSTALL_DIR="$PROJECT_ROOT/.ors"
 PG_DATA_DIR="$PROJECT_ROOT/.pgdata"
-OSM_PBF="$CACHE_DIR/brandenburg-latest.osm.pbf"
-OSM_PBF_URL="https://download.geofabrik.de/europe/germany/brandenburg-latest.osm.pbf"
+OSM_PBF="$CACHE_DIR/$REGION-latest.osm.pbf"
+OSM_PBF_URL="https://download.geofabrik.de/europe/germany/$REGION-latest.osm.pbf"
 
 # -- Helpers -------------------------------------------------------------------
 _log()  { echo; echo "-- $*"; }
@@ -88,23 +89,30 @@ fi
 # -- 3. OSM data via osmprj ----------------------------------------------------
 _log "OSM data (osmprj)"
 
+mkdir -p "$OSMPRJ_WORKDIR"
+
+echo "$OSMPRJ_WORKDIR/osmprj.toml"
+
+if [[ ! -e "$OSMPRJ_WORKDIR/osmprj.toml" ]]; then
+    cd "$OSMPRJ_WORKDIR"
+    osmprj init --db "$NATIVE_DSN"
+    osmprj add --srid 3857 --path "$OSM_PBF" --name $REGION --theme pgosm
+fi
+
 OSM_LOADED=$(_psql_bool \
   "SELECT EXISTS(
      SELECT 1 FROM information_schema.tables
-     WHERE table_schema = 'public' AND table_name = 'planet_osm_polygon'
+     WHERE table_schema = '$REGION' AND table_name = 'amenity_polygon'
    )")
 
 if [[ "$OSM_LOADED" == "t" ]]; then
-  _ok "Already loaded -- planet_osm_polygon present"
+  _ok "Already loaded -- amenity_polygon present"
 else
   _info "Running osmprj init / add / sync in ${OSMPRJ_WORKDIR} (may take several minutes)..."
-  mkdir -p "$OSMPRJ_WORKDIR"
   # osmprj stores its project config in the working directory, so all three
   # commands must run from the same directory.
   (
     cd "$OSMPRJ_WORKDIR"
-    osmprj init --db "$NATIVE_DSN"
-    osmprj add --srid 3857 --path "$OSM_PBF" --name brandenburg --theme pgosm
     osmprj sync
   )
   _ok "OSM data loaded"
@@ -155,12 +163,19 @@ else
     --port        "$ORS_PORT"
 
   _info "Starting ORS in background (logs -> ${ORS_INSTALL_DIR}/ors-stdout.log)..."
-  # setsid mirrors conftest.py start_new_session=True: puts ors-launcher and its
-  # child ors (Java) in the same process group so they can be killed together.
-  setsid ors-launcher start --install-dir "$ORS_INSTALL_DIR" \
-    > "${ORS_INSTALL_DIR}/ors-stdout.log" 2>&1 &
-  ORS_PID=$!
-  disown "$ORS_PID"
+  # python3 start_new_session=True is the cross-platform equivalent of setsid:
+  # puts ors-launcher and its Java child in a new session (PGID == PID) so
+  # "kill -TERM -- -$ORS_PID" terminates the whole group on macOS and Linux.
+  ORS_PID=$(python3 -c "
+import subprocess, sys
+p = subprocess.Popen(
+    ['ors-launcher', 'start', '--install-dir', sys.argv[1]],
+    stdout=open(sys.argv[2], 'w'),
+    stderr=subprocess.STDOUT,
+    start_new_session=True,
+)
+print(p.pid)
+" "$ORS_INSTALL_DIR" "${ORS_INSTALL_DIR}/ors-stdout.log")
 
   _info "Waiting for ORS health check -- first run builds routing graph (3-5 min)..."
   DEADLINE=$((SECONDS + 300))
@@ -180,6 +195,8 @@ fi
 
 # -- 6. Alembic migrations -----------------------------------------------------
 _log "Alembic migrations"
+
+cd "$PROJECT_ROOT"
 
 PARKALYZER_DSN="$SQLALCHEMY_DSN" parkalyzer db migrate
 

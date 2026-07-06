@@ -25,6 +25,7 @@ format: revealjs
 - Project based dependency management
 - Uses conda packaging
 - Built on top of conda-forge
+- Very cool mascot 😜🪄✨
 :::
 
 ::: {.column width="40%"}
@@ -33,3 +34,4 @@ format: revealjs
 
 ::::
 
+##
