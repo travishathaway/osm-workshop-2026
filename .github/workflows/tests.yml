@@ -24,6 +24,10 @@ jobs:
           environments: dev
           manifest-path: app/pyproject.toml
 
-      - name: Run tests
+      - name: Run unit tests
         run: pixi run -e dev test
+        working-directory: app/
+
+      - name: Run integration tests
+        run: pixi run -e dev test-integration
         working-directory: app/
