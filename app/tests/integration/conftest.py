@@ -11,13 +11,14 @@ from pathlib import Path
 import httpx
 import pytest
 import platformdirs
+from alembic import command as alembic_cmd
+from alembic.config import Config as AlembicConfig
 
 from parkalyzer.constants import APP_NAME
 
-BREMEN_PBF_URL = "https://download.geofabrik.de/europe/germany/bremen-latest.osm.pbf"
+REGION = "bremen"
+OSM_PBF_URL = f"https://download.geofabrik.de/europe/germany/{REGION}-latest.osm.pbf"
 ZENSUS_DATASET = "alter_in_5_altersklassen"
-# Bremen bounding box (WGS84): minlon, minlat, maxlon, maxlat
-BREMEN_BBOX = "8.48,53.01,8.99,53.23"
 SRID = "3857"
 
 def _find_free_port() -> int:
@@ -26,6 +27,20 @@ def _find_free_port() -> int:
         s.bind(("127.0.0.1", 0))
         s.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         return s.getsockname()[1]
+
+
+def _alembic_cfg(dsn: str) -> AlembicConfig:
+    ini_path = Path(__file__).parent.parent.parent / "alembic.ini"
+    cfg = AlembicConfig(str(ini_path))
+    cfg.set_main_option("sqlalchemy.url", dsn)
+    return cfg
+
+
+@pytest.fixture(scope="module")
+def migrated_db(postgresql):
+    """Run alembic migrations once for this test module."""
+    alembic_cmd.upgrade(_alembic_cfg(postgresql["dsn"]), "head")
+    return postgresql
 
 
 @pytest.fixture(scope="session")
@@ -38,7 +53,7 @@ def postgresql(tmp_path_factory):
     from pg_helper.postgres import PostgresCluster
 
     port = _find_free_port()
-    data_dir = tmp_path_factory.mktemp("pgdata")
+    data_dir = tmp_path_factory.mktemp("pgdata") / "cluster"
 
     cluster = PostgresCluster(data_dir=data_dir, port=port)
     cluster.setup(databases=["parkalyzer"], enable_postgis=True)
@@ -58,34 +73,33 @@ def postgresql(tmp_path_factory):
 def cache_dir():
     """Ensure cache directory exists."""
     location = Path(platformdirs.user_cache_dir(f"{APP_NAME}-tests"))
-    location.mkdir(parents=True, exists_ok=True)
+    location.mkdir(parents=True, exist_ok=True)
 
     return location
 
 @pytest.fixture(scope="session")
-def bremen_osm_pbf(cache_dir):
+def osm_pbf(cache_dir):
     """Provide the Bremen OSM PBF file path, downloading it if not cached.
     """
-    pbf = cache_dir / "bremen-latest.osm.pbf"
+    pbf = cache_dir / f"{REGION}-latest.osm.pbf"
     if not pbf.exists():
-        urllib.request.urlretrieve(BREMEN_PBF_URL, pbf)
+        urllib.request.urlretrieve(OSM_PBF_URL, pbf)
     return pbf
 
 
 @pytest.fixture(scope="session")
-def osmprj_data(postgresql, bremen_osm_pbf, tmp_path):
+def osmprj_data(postgresql, osm_pbf, tmp_path_factory):
     """Load Bremen OSM data into the test PostgreSQL database via osmprj.
 
     Uses the 'pgosm' theme to populate planet_osm_polygon and related tables
     in the public schema (SRID 3857), which is what the parks find command reads.
     """
-    workdir = Path(tmp_path).mkdir()
+    workdir = tmp_path_factory.mktemp("osmprj")
 
     subprocess.run(
         [
             "osmprj", "init",
             "--db", postgresql["native_dsn"],
-            "--theme", "pgosm",
         ],
         check=True,
         cwd=workdir,
@@ -95,8 +109,9 @@ def osmprj_data(postgresql, bremen_osm_pbf, tmp_path):
         [
             "osmprj", "add",
             "--srid", SRID,
-            "--path", str(bremen_osm_pbf),
-            "--name", "bremen"
+            "--path", str(osm_pbf),
+            "--theme", "pgosm",
+            "--name", REGION
         ],
         check=True,
         cwd=workdir,
@@ -146,7 +161,7 @@ def zensus_data(postgresql):
 
 
 @pytest.fixture(scope="session")
-def openrouteservice(tmp_path_factory, bremen_osm_pbf):
+def openrouteservice(tmp_path_factory, osm_pbf):
     """Start an OpenRouteService instance for the test session.
 
     Uses the Bremen OSM PBF for routing graphs. First run builds the graph,
@@ -164,7 +179,7 @@ def openrouteservice(tmp_path_factory, bremen_osm_pbf):
     subprocess.run(
         [
             "ors-launcher", "init",
-            "--osm-file", str(bremen_osm_pbf),
+            "--osm-file", str(osm_pbf),
             "--install-dir", str(install_dir),
             "--port", str(port),
         ],

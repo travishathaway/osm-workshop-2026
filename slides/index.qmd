@@ -2,6 +2,7 @@
 title: "Research Like a Software Engineer"
 subtitle: "Organizing Your Projects Like Applications"
 author: "Travis Hathaway"
+syntax-highlighting: monokai
 format: revealjs
 ---
 
@@ -10,11 +11,17 @@ format: revealjs
 ::: {.incremental}
 - Setting up our development environment
 - An overview of the tools we'll be using
-- Discovering the problem we're trying to solve
+- Discovering our research question
 - Creating the project structure
 - Running the tools we've created
 - Final analysis
 :::
+
+
+## Composability
+
+As we go through today's presentation, we'll also be exploring
+the power of composability...
 
 
 ## Environment management with `pixi`
@@ -24,7 +31,8 @@ format: revealjs
 ::: {.column width="60%" .incremental}
 - Project based dependency management
 - Uses conda packaging
-- Built on top of conda-forge
+- Allows to manage all dependencies, not just Python ones
+- Built on top of [conda-forge](https://conda-forge.org)
 - Very cool mascot 😜🪄✨
 :::
 
@@ -34,4 +42,112 @@ format: revealjs
 
 ::::
 
-##
+## Setup project 🚜
+
+```bash
+# Clone the repository
+git clone git@github.com:travishathaway/osm-workshop-2026.git
+
+# Switch to the app/ directory
+cd app/
+
+# Start a shell with pixi
+pixi shell -e dev
+```
+
+## More tools you'll love 🫶 🧰
+
+When working working with GIS data in PostgreSQL, these two tools are indispensable:
+
+:::: {.columns}
+
+::: {.column .fragment width="50%"}
+### pgAdmin
+
+![](img/postgres-alt.svg)
+:::
+
+::: {.column .fragment width="50%"}
+### QGIS
+
+![](img/qgis-logo.png)
+:::
+
+::::
+
+
+## Foundation 🧱
+
+Our project will need two servers:
+
+::: {.incremental}
+1. **PostgreSQL**
+    a. Holds census and OpenStreetMap (OSM) data
+    b. Holds our own application data
+2. **openrouteservice**
+    a. Routes paths between two points (also uses OSM data)
+:::
+
+## Managing data 📊
+
+We also use these tools for managing our data:
+
+::: {.incremental}
+1. **osmprj**
+    a. Tool for importing and creating a custom schema for OSM data
+2. **zensus2pgsql**
+    a. Imports German Census Data into our PostgreSQL database
+:::
+
+---
+
+Let's check out these tools...
+
+---
+
+## Research question 🧐
+
+> What percentage of Berliners live within a 15 minute walk of a park/greenspace?
+
+## What is a park/greenspace?
+
+::: {.incremental}
+- Publicly accessible
+- "green" (more plants, less asphalt and concrete)
+- Recreation facilities
+- ???
+:::
+
+---
+
+Time to look in our database...
+
+---
+
+## Every project needs a name...
+
+::: {.incremental}
+
+![](img/parkalyzer_logo.png)
+
+:::
+
+## Project structure 🏭
+
+Some of the most important files/folders
+
+```bash
+pyproject.toml      # <-- project metadata lives here
+./src/parkalyzer/   # <-- where the Python CLI lives
+./scripts/          # <-- important scripts for development
+                    #     environment
+./tests/            # <-- tests, yes research projects need
+                    #     these too!!! 😜
+```
+
+---
+
+Let's dig deeper in to the source code! 🏃‍♂️
+
+---
+

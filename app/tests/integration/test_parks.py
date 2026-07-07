@@ -7,6 +7,8 @@ from click.testing import CliRunner
 
 from parkalyzer.main import cli
 
+from .conftest import REGION
+
 
 def _alembic_cfg(dsn: str) -> AlembicConfig:
     ini_path = Path(__file__).parent.parent.parent / "alembic.ini"
@@ -36,8 +38,13 @@ def test_parks_find_dry_run_reports_count(migrated_db, osmprj_data):
     """parks find --dry-run should find parks and report a count."""
     runner = CliRunner()
     result = runner.invoke(
-        cli,
-        ["--dsn", migrated_db["dsn"], "parks", "find", "--dry-run"],
+        cli,[
+            "--dsn", migrated_db["dsn"],
+            "parks", "find",
+            "--dry-run",
+            "--osm-schema", REGION,
+            REGION.capitalize()
+        ],
     )
     assert result.exit_code == 0, result.output
     assert "parks" in result.output.lower()
@@ -50,8 +57,12 @@ def test_parks_find_imports_parks(migrated_db, osmprj_data):
 
     runner = CliRunner()
     result = runner.invoke(
-        cli,
-        ["--dsn", migrated_db["dsn"], "parks", "find"],
+        cli,[
+            "--dsn", migrated_db["dsn"],
+            "parks", "find",
+            "--osm-schema", REGION,
+            REGION.capitalize()
+        ],
     )
     assert result.exit_code == 0, result.output
 
@@ -71,8 +82,12 @@ def test_parks_find_is_idempotent(migrated_db, osmprj_data):
     runner = CliRunner()
     for _ in range(2):
         result = runner.invoke(
-            cli,
-            ["--dsn", migrated_db["dsn"], "parks", "find"],
+            cli,[
+                "--dsn", migrated_db["dsn"],
+                "parks", "find",
+                "--osm-schema", REGION,
+                REGION.capitalize()
+            ],
         )
         assert result.exit_code == 0, result.output
 

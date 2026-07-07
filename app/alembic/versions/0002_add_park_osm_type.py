@@ -33,6 +33,10 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
+    # Truncate parks (and distance_pairs via CASCADE) before narrowing the geometry type.
+    # The POLYGON constraint rejects MultiPolygon rows, so any non-Polygon data must be
+    # cleared first.  Data loss on downgrade is expected and acceptable.
+    op.execute("TRUNCATE parkalyzer.parks CASCADE")
     op.execute("""
         ALTER TABLE parkalyzer.parks
             DROP COLUMN IF EXISTS tags

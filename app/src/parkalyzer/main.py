@@ -7,6 +7,7 @@ from rich.console import Console
 
 from parkalyzer.commands.db import db_group
 from parkalyzer.commands.parks import parks_group
+from parkalyzer.commands.report import report_cmd
 from parkalyzer.commands.routes import routes_group
 from parkalyzer.errors import ConfigurationError
 
@@ -37,6 +38,7 @@ def cli(ctx: click.Context, dsn: str | None, ors_url: str | None) -> None:
 cli.add_command(db_group)
 cli.add_command(parks_group)
 cli.add_command(routes_group)
+cli.add_command(report_cmd)
 
 
 def main() -> None:

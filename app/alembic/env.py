@@ -14,9 +14,11 @@ from parkalyzer.db.models import Base
 
 config = context.config
 
-# Inject DSN from environment, overriding the placeholder in alembic.ini.
+# Inject DSN from environment — only when the URL is still the alembic.ini placeholder,
+# so that programmatically-set DSNs (e.g. from test fixtures) are not overridden.
+_PLACEHOLDER_DSN = "postgresql+psycopg://localhost/parkalyzer"
 dsn = os.environ.get("PARKALYZER_DSN")
-if dsn:
+if dsn and config.get_main_option("sqlalchemy.url") == _PLACEHOLDER_DSN:
     config.set_main_option("sqlalchemy.url", dsn)
 
 if config.config_file_name is not None:
@@ -34,7 +36,6 @@ def run_migrations_offline() -> None:
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
         include_schemas=True,
-        version_table_schema="parkalyzer",
     )
     with context.begin_transaction():
         context.execute("CREATE SCHEMA IF NOT EXISTS parkalyzer")
@@ -55,7 +56,7 @@ def run_migrations_online() -> None:
             connection=connection,
             target_metadata=target_metadata,
             include_schemas=True,
-            version_table_schema="parkalyzer",
+            version_table_schema="public",
         )
         with context.begin_transaction():
             context.run_migrations()

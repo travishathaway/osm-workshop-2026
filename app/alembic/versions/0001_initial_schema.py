@@ -66,8 +66,23 @@ def upgrade() -> None:
             ON parkalyzer.distance_pairs (park_id)
     """)
     op.execute("""
-        CREATE INDEX IF NOT EXISTS distance_pairs_census_point_id_idx
-            ON parkalyzer.distance_pairs (census_point_id)
+        DO $$
+        BEGIN
+            IF EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = 'parkalyzer'
+                  AND table_name = 'distance_pairs'
+                  AND column_name = 'census_point_id'
+            ) AND NOT EXISTS (
+                SELECT 1 FROM pg_indexes
+                WHERE schemaname = 'parkalyzer'
+                  AND tablename = 'distance_pairs'
+                  AND indexname = 'distance_pairs_census_point_id_idx'
+            ) THEN
+                CREATE INDEX distance_pairs_census_point_id_idx
+                    ON parkalyzer.distance_pairs (census_point_id);
+            END IF;
+        END $$
     """)
 
 

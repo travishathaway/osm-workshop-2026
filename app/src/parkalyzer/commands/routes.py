@@ -304,18 +304,27 @@ def status(ctx: click.Context) -> None:
     except ConfigurationError as exc:
         raise click.ClickException(str(exc)) from exc
 
-    status_sql = text(f"""
-        SELECT
-            (SELECT COUNT(*) FROM parkalyzer.parks)                    AS park_count,
-            (SELECT COUNT(*) FROM {ZENSUS_SCHEMA}.{ZENSUS_TABLE})      AS zensus_count,
-            (SELECT COUNT(*) FROM parkalyzer.distance_pairs)           AS pair_count,
-            (SELECT COUNT(*) FROM parkalyzer.distance_pairs
-             WHERE distance_meters IS NULL)                             AS unreachable_count,
-            (SELECT MAX(computed_at) FROM parkalyzer.distance_pairs)   AS last_computed
-    """)
-
     with make_session(config.dsn) as session:
-        row = session.execute(status_sql).fetchone()
+        zensus_table_exists = session.execute(text("""
+            SELECT EXISTS (
+                SELECT 1 FROM information_schema.tables
+                WHERE table_schema = :schema AND table_name = :table
+            )
+        """), {"schema": ZENSUS_SCHEMA, "table": ZENSUS_TABLE}).scalar()
+
+        zensus_count = (
+            session.execute(text(f"SELECT COUNT(*) FROM {ZENSUS_SCHEMA}.{ZENSUS_TABLE}")).scalar()
+            if zensus_table_exists else 0
+        )
+
+        row = session.execute(text("""
+            SELECT
+                (SELECT COUNT(*) FROM parkalyzer.parks)                  AS park_count,
+                (SELECT COUNT(*) FROM parkalyzer.distance_pairs)         AS pair_count,
+                (SELECT COUNT(*) FROM parkalyzer.distance_pairs
+                 WHERE distance_meters IS NULL)                           AS unreachable_count,
+                (SELECT MAX(computed_at) FROM parkalyzer.distance_pairs) AS last_computed
+        """)).fetchone()
 
     if row is None:
         raise click.ClickException("Could not query status — is the parkalyzer schema migrated?")
@@ -324,7 +333,7 @@ def status(ctx: click.Context) -> None:
     table.add_column("Metric", style="bold")
     table.add_column("Value", justify="right")
     table.add_row("Parks", str(row.park_count or 0))
-    table.add_row("Zensus grid cells", str(row.zensus_count or 0))
+    table.add_row("Zensus grid cells", str(zensus_count))
     table.add_row("Computed pairs", str(row.pair_count or 0))
     table.add_row("Unreachable pairs", str(row.unreachable_count or 0))
     table.add_row("Last computed", str(row.last_computed) if row.last_computed else "[dim]never[/dim]")

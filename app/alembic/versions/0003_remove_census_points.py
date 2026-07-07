@@ -30,12 +30,38 @@ def upgrade() -> None:
     op.execute("ALTER TABLE parkalyzer.distance_pairs DROP COLUMN IF EXISTS census_point_id")
 
     # Add gitter_id text column referencing zensus grid cell IDs
-    op.execute("ALTER TABLE parkalyzer.distance_pairs ADD COLUMN gitter_id VARCHAR(100) NOT NULL DEFAULT ''")
-    op.execute("ALTER TABLE parkalyzer.distance_pairs ALTER COLUMN gitter_id DROP DEFAULT")
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.columns
+                WHERE table_schema = 'parkalyzer'
+                  AND table_name = 'distance_pairs'
+                  AND column_name = 'gitter_id'
+            ) THEN
+                ALTER TABLE parkalyzer.distance_pairs
+                    ADD COLUMN gitter_id VARCHAR(100) NOT NULL DEFAULT '';
+                ALTER TABLE parkalyzer.distance_pairs
+                    ALTER COLUMN gitter_id DROP DEFAULT;
+            END IF;
+        END $$
+    """)
 
     # New unique constraint and index
-    op.execute("ALTER TABLE parkalyzer.distance_pairs ADD CONSTRAINT uq_park_gitter_id UNIQUE (park_id, gitter_id)")
-    op.execute("CREATE INDEX distance_pairs_gitter_id_idx ON parkalyzer.distance_pairs (gitter_id)")
+    op.execute("""
+        DO $$
+        BEGIN
+            IF NOT EXISTS (
+                SELECT 1 FROM pg_constraint
+                WHERE conname = 'uq_park_gitter_id'
+                  AND conrelid = 'parkalyzer.distance_pairs'::regclass
+            ) THEN
+                ALTER TABLE parkalyzer.distance_pairs
+                    ADD CONSTRAINT uq_park_gitter_id UNIQUE (park_id, gitter_id);
+            END IF;
+        END $$
+    """)
+    op.execute("CREATE INDEX IF NOT EXISTS distance_pairs_gitter_id_idx ON parkalyzer.distance_pairs (gitter_id)")
 
     # Drop the now-unused census_points table
     op.execute("DROP TABLE IF EXISTS parkalyzer.census_points CASCADE")
