@@ -1,0 +1,29 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    name: Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+      fail-fast: false
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: prefix-dev/setup-pixi@v0.8.8
+        with:
+          environments: dev
+          manifest-path: app/pyproject.toml
+
+      - name: Run tests
+        run: pixi run -e dev test
+        working-directory: app/
