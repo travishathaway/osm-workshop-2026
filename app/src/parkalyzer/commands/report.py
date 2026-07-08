@@ -119,6 +119,7 @@ def _top_parks_sql(osm_schema: str) -> str:
         JOIN {osm_schema}.place_polygon b
             ON b.name = :location
            AND ST_Intersects(b.geom, p.geometry)
+        GROUP BY p.osm_type, p.name, p.area
         ORDER BY p.area DESC NULLS LAST
         LIMIT 10
     """

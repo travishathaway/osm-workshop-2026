@@ -24,6 +24,14 @@ As we go through today's presentation, we'll also be exploring
 the power of composability...
 
 
+## Windows users...
+
+Sorry, there is literally one package (postgis) preventing us from running
+this...
+
+I highly suggest running this in **WSL** or a **Linux VM** 🐧.
+
+
 ## Environment management with `pixi`
 
 :::: {.columns}
@@ -147,7 +155,13 @@ pyproject.toml      # <-- project metadata lives here
 
 ---
 
-Let's dig deeper in to the source code! 🏃‍♂️
+Let's checkout this tool! 🏃‍♂️
 
 ---
 
+
+## Q/A Round 🙋‍♀️🙋‍♂️
+
+Thanks for listening!
+
+Happy to answer any questions you have.
