@@ -19,9 +19,9 @@ SAMPLE_GEOMETRY = {
 }
 
 SAMPLE_ORS_RESPONSE = {
-    "routes": [
+    "features": [
         {
-            "summary": {"distance": 1234.5, "duration": 987.6},
+            "properties": {"summary": {"distance": 1234.5, "duration": 987.6}},
             "geometry": SAMPLE_GEOMETRY,
         }
     ]
@@ -89,13 +89,14 @@ def _run(pool, status_code, body=None, task_id=1):
 
 
 def test_route_and_save_sends_geojson_format():
-    """ORS request must include geometry_format=geojson."""
+    """ORS request must use the /geojson path, not a body parameter."""
     pool, _ = _make_pool()
     mock_client, _ = _run(pool, 200, SAMPLE_ORS_RESPONSE)
 
-    call_kwargs = mock_client.post.call_args
-    payload = call_kwargs.kwargs.get("json") or call_kwargs.args[1]
-    assert payload.get("geometry_format") == "geojson"
+    url = mock_client.post.call_args.args[0]
+    assert url.endswith("/geojson")
+    call_kwargs = mock_client.post.call_args.kwargs.get("json") or {}
+    assert "geometry_format" not in call_kwargs
 
 
 def test_route_and_save_inserts_geometry():

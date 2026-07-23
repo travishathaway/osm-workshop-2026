@@ -14,7 +14,7 @@ ZENSUS_TABLE = "alter_in_5_altersklassen_100m"
 
 DEFAULT_ORS_BASE_URL = "http://localhost:8080"
 ORS_MATRIX_PATH = "/ors/v2/matrix/{profile}"
-ORS_DIRECTIONS_PATH = "/ors/v2/directions/{profile}"
+ORS_DIRECTIONS_PATH = "/ors/v2/directions/{profile}/geojson"
 ORS_DEFAULT_PROFILE = "foot-walking"
 ORS_MAX_LOCATIONS = 50
 ORS_CONCURRENCY = 25

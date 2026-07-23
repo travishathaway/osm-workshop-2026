@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import logging
+
 import pytest
 from click.testing import CliRunner
 from sqlalchemy import create_engine, text
@@ -12,7 +14,7 @@ from .conftest import REGION
 
 
 @pytest.mark.integration
-def test_full_workflow(migrated_db, osmprj_data, zensus_data, openrouteservice):
+def test_full_workflow(migrated_db, osmprj_data, zensus_data, openrouteservice, caplog):
     """Happy-path end-to-end: find parks → list parks → calculate routes → check status."""
     runner = CliRunner()
     dsn = migrated_db["dsn"]
@@ -38,18 +40,21 @@ def test_full_workflow(migrated_db, osmprj_data, zensus_data, openrouteservice):
     assert f"{park_count} total" in result.output
 
     # Step 3: calculate routes — limit to keep the test fast
-    result = runner.invoke(
-        cli,
-        [
-            "--dsn", dsn,
-            "--ors-url", ors_url,
-            "routes", "calculate",
-            "--limit", "20",
-            location,
-        ],
-        env={"PARKALYZER_OSM_SCHEMA": REGION},
-    )
+    with caplog.at_level(logging.ERROR, logger="parkalyzer"):
+        result = runner.invoke(
+            cli,
+            [
+                "--dsn", dsn,
+                "--ors-url", ors_url,
+                "routes", "calculate",
+                "--limit", "20",
+                location,
+            ],
+            env={"PARKALYZER_OSM_SCHEMA": REGION},
+        )
     assert result.exit_code == 0, result.output
+    ors_400_errors = [r.message for r in caplog.records if "HTTP 400" in r.message]
+    assert not ors_400_errors, "ORS returned unexpected 400 errors:\n" + "\n".join(ors_400_errors)
 
     # Step 4: status should reflect parks and zensus cells without error
     result = runner.invoke(cli, ["--dsn", dsn, "routes", "status"])

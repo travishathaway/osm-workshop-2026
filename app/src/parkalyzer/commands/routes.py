@@ -145,7 +145,6 @@ async def _route_and_save(
                 f"{ors_url}{ORS_DIRECTIONS_PATH.format(profile=profile)}",
                 json={
                     "coordinates": [[census_lon, census_lat], [park_lon, park_lat]],
-                    "geometry_format": "geojson",
                 },
             )
             if response.status_code != 200:
@@ -158,8 +157,8 @@ async def _route_and_save(
                 return
 
             data = response.json()
-            route_data = data["routes"][0]
-            summary = route_data["summary"]
+            route_data = data["features"][0]
+            summary = route_data["properties"]["summary"]
             distance = summary["distance"]
             duration = summary["duration"]
             geometry = route_data["geometry"]
