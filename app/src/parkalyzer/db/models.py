@@ -75,6 +75,7 @@ class DistancePair(Base):
     gitter_id: Mapped[str] = mapped_column(sa.String(100), nullable=False, index=True)
     distance_meters: Mapped[Optional[float]] = mapped_column(sa.Double, nullable=True)
     duration_seconds: Mapped[Optional[float]] = mapped_column(sa.Double, nullable=True)
+    route: Mapped[Optional[str]] = mapped_column(Geometry("LINESTRING", 4326), nullable=True)
     computed_at: Mapped[datetime.datetime] = mapped_column(
         sa.DateTime(timezone=True), nullable=False, server_default=sa.text("now()")
     )

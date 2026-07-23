@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import datetime
+import json
 import logging
 from asyncio import CancelledError, Semaphore, create_task
 
@@ -37,16 +38,16 @@ _PAGE_SIZE = 10_000
 # Composed once; reused across all pair inserts.
 _INSERT_SQL = """
     INSERT INTO parkalyzer.distance_pairs
-        (park_id, gitter_id, distance_meters, duration_seconds, computed_at)
-    VALUES (%s, %s, %s, %s, %s)
+        (park_id, gitter_id, distance_meters, duration_seconds, route, computed_at)
+    VALUES (%s, %s, %s, %s, ST_SetSRID(ST_GeomFromGeoJSON(%s), 4326), %s)
     ON CONFLICT (park_id, gitter_id) DO NOTHING
 """
 
 # Inserted when ORS cannot route a pair so it is never retried.
 _SENTINEL_SQL = """
     INSERT INTO parkalyzer.distance_pairs
-        (park_id, gitter_id, distance_meters, duration_seconds, computed_at)
-    VALUES (%s, %s, NULL, NULL, %s)
+        (park_id, gitter_id, distance_meters, duration_seconds, route, computed_at)
+    VALUES (%s, %s, NULL, NULL, NULL, %s)
     ON CONFLICT (park_id, gitter_id) DO NOTHING
 """
 
@@ -142,7 +143,10 @@ async def _route_and_save(
         try:
             response = await client.post(
                 f"{ors_url}{ORS_DIRECTIONS_PATH.format(profile=profile)}",
-                json={"coordinates": [[census_lon, census_lat], [park_lon, park_lat]]},
+                json={
+                    "coordinates": [[census_lon, census_lat], [park_lon, park_lat]],
+                    "geometry_format": "geojson",
+                },
             )
             if response.status_code != 200:
                 logger.error(
@@ -154,12 +158,17 @@ async def _route_and_save(
                 return
 
             data = response.json()
-            summary = data["routes"][0]["summary"]
+            route_data = data["routes"][0]
+            summary = route_data["summary"]
             distance = summary["distance"]
             duration = summary["duration"]
+            geometry = route_data["geometry"]
 
             async with pool.connection() as conn, conn.cursor() as cur:
-                await cur.execute(_INSERT_SQL, (park_id, gitter_id, distance, duration, computed_at))
+                await cur.execute(
+                    _INSERT_SQL,
+                    (park_id, gitter_id, distance, duration, json.dumps(geometry), computed_at),
+                )
 
         except CancelledError:
             raise

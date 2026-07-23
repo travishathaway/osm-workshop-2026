@@ -73,3 +73,17 @@ def test_upgrade_after_downgrade(postgresql):
     alembic_cmd.upgrade(cfg, "head")
     alembic_cmd.downgrade(cfg, "base")
     alembic_cmd.upgrade(cfg, "head")  # must succeed after a full downgrade
+
+
+@pytest.mark.integration
+def test_upgrade_head_adds_route_column(postgresql):
+    cfg = _alembic_cfg(postgresql["dsn"])
+    alembic_cmd.upgrade(cfg, "head")
+
+    engine = create_engine(postgresql["dsn"])
+    insp = inspect(engine)
+    columns = {col["name"]: col for col in insp.get_columns("distance_pairs", schema="parkalyzer")}
+    engine.dispose()
+
+    assert "route" in columns
+    assert columns["route"]["nullable"] is True
